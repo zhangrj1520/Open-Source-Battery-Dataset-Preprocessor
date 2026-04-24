@@ -1,0 +1,8 @@
+
+data_dir:
+  KIT_dataset: "E:/data/OpenSourceData/KIT/"
+  XJTU_dataset: "E:/data/OpenSourceData/XJTU/"
+  NASA_dataset: "E:/data/OpenSourceData/NASA/"
+  MIT_dataset: "E:/data/OpenSourceData/MIT/"
+  HUST_dataset: "E:/data/OpenSourceData/HUST/"
+  CACLE_dataset: "E:/data/OpenSourceData/XJTU/"
