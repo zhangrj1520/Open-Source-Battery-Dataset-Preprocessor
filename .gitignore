@@ -1,2 +1,4 @@
 notebooks/
+.vscode/
 config.yaml
+*.pyc
