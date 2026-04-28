@@ -13,6 +13,7 @@ The project is currently under active development, with plans to support:
 - [ ] **MIT Dataset**: raw data at <https://data.matr.io/1/#projects/5c48dd2bc625d700019f3204>
 - [ ] **HUST Dataset**: raw data at <https://data.mendeley.com/datasets/nsc7hnsg4s/2>
 - [ ] **CACLE Dataset**: raw data at <https://calce.umd.edu/battery-data>
+- [ ] **SNU Dataset**: raw data at <https://doi.org/10.17632/h2y7mj4kt7.2>
 
 (More to be added...)
 
