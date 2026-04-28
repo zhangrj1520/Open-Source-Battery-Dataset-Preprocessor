@@ -1,4 +1,6 @@
-notebooks/
-.vscode/
+/notebooks
+/.vscode
+/data
+__pycache__/
 config.yaml
 *.pyc
