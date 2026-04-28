@@ -8,12 +8,11 @@ The goal is to provide a consistent data foundation for subsequent development o
 
 ## Supported Datasets (Planned)
 The project is currently under active development, with plans to support:
-- [ ] **KIT Dataset**
-- [ ] **XJTU Dataset**
-- [ ] **NASA Dataset**
-- [ ] **MIT Dataset**
-- [ ] **HUST Dataset**
-- [ ] **CACLE Dataset**
+- [x] **Tongji Dataset**: raw data at <https://doi.org/10.5281/zenodo.6379165>
+- [x] **XJTU Dataset**: raw data at <https://zenodo.org/records/10963339>
+- [ ] **MIT Dataset**: raw data at <https://data.matr.io/1/#projects/5c48dd2bc625d700019f3204>
+- [ ] **HUST Dataset**: raw data at <https://data.mendeley.com/datasets/nsc7hnsg4s/2>
+- [ ] **CACLE Dataset**: raw data at <https://calce.umd.edu/battery-data>
 
 (More to be added...)
 
