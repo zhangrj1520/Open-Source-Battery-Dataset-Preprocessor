@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from data_processor.base_processor import BaseProcessor 
 
+
 class TongjiProcessor(BaseProcessor):
     """处理Tongji数据集的Processor"""
     def load_data(self, file_path):
