@@ -39,7 +39,7 @@ The preprocessed data will strictly adhere to the following naming conventions:
 - [x] **Tongji Dataset:** [Source](https://doi.org/10.5281/zenodo.6379165")
 - [x] **XJTU Dataset:** [Source](https://zenodo.org/records/10963339)
 - [ ] **MIT Dataset:** [Source](https://data.matr.io/1/#projects/5c48dd2bc625d700019f3204)
-- [ ] **HUST Dataset:** [Source](https://data.mendeley.com/datasets/nsc7hnsg4s/2)
+- [x]  **HUST Dataset:** [Source](https://data.mendeley.com/datasets/nsc7hnsg4s/2)
 - [ ] **CALCE Dataset:** [Source](https://calce.umd.edu/battery-data)
 - [ ] **SNU Dataset:** [Source](https://doi.org/10.17632/h2y7mj4kt7.2)
 
