@@ -73,40 +73,57 @@ class TongjiProcessor(BaseProcessor):
 
     def _remove_abnormal_cycles(self, file_path, df):
         """
-        根据原始Tongji dataset的处理逻辑进行异常cycle剔除
-        Dataset_1_NCA_battery: 
-        Dataset_2_NCM_battery: 
-        Dataset_3_NCM_NCA_battery: 
+        多维异常cycle检测:
+        1. 放电容量过滤 (Dataset-specific)
+        2. 阶段完整性: 每个cycle应有恰好4段(charge → rest → discharge → rest)
+        3. 时间连续性: 相邻数据点间隔 < 600s
         """
         df_discharge = df[df['charge_stage'] == 3]
         cycle_caps = df_discharge.groupby('cycle_number')['capacity'].max()
-        valid_cycle_numbers = []
+        all_cycles = cycle_caps.index
+
+        # 放电容量过滤
+        capacity_valid = pd.Series(False, index=all_cycles)
 
         if "Dataset_1_NCA_battery" in str(file_path):
-            mask = (cycle_caps >= 2.5) & (cycle_caps <= 3.5)
-            valid_cycle_numbers = cycle_caps[mask].index.tolist()
+            capacity_valid = (cycle_caps >= 2.5) & (cycle_caps <= 3.5)
 
         elif "Dataset_2_NCM_battery" in str(file_path):
-            mask = (cycle_caps >= 2.5)
-            valid_cycle_numbers = cycle_caps[mask].index.tolist()
-        
+            capacity_valid = cycle_caps >= 2.5
+
         elif "Dataset_3_NCM_NCA_battery" in str(file_path):
-            q_p = cycle_caps.iloc[0] 
+            valid_list = []
+            q_p = cycle_caps.iloc[0]
             delta = 1
-            
             for cyc, q_dis_ah in cycle_caps.items():
                 if q_dis_ah < 1.65 or q_dis_ah > 2.51:
                     delta += 1
                     continue
-
                 if abs(q_dis_ah - q_p) > delta * 0.01:
                     delta += 1
                     continue
-
-                valid_cycle_numbers.append(cyc)
-                q_p = q_dis_ah 
+                valid_list.append(cyc)
+                q_p = q_dis_ah
                 delta = 1
-        
+            capacity_valid = pd.Series(all_cycles.isin(valid_list), index=all_cycles)
+        else:
+            capacity_valid[:] = True
+
+        # 阶段完整性: 每个cycle应有恰好4次阶段切换
+        stage_shifted = df.groupby('cycle_number')['charge_stage'].shift()
+        stage_changed = (df['charge_stage'] != stage_shifted)
+        transitions_per_cycle = stage_changed.groupby(df['cycle_number']).sum()
+        stage_valid = transitions_per_cycle == 4
+
+        # 时间连续性: 相邻数据点间隔 < 600s
+        time_diff = df.groupby('cycle_number')['time'].diff()
+        max_gap_per_cycle = time_diff.groupby(df['cycle_number']).max()
+        time_valid = max_gap_per_cycle < 600
+
+        # 过滤条件取交集
+        final_valid = capacity_valid & stage_valid & time_valid
+        valid_cycle_numbers = final_valid[final_valid].index.tolist()
+
         return df[df['cycle_number'].isin(valid_cycle_numbers)].copy()
 
     
