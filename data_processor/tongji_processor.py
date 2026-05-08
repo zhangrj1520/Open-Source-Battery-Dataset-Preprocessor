@@ -15,7 +15,7 @@ class TongjiProcessor(BaseProcessor):
         
         # 判定充放电状态
         stages = self._determine_charge_stages(control_mA, control_V)
-        
+
         # 将充放电容量列合并
         q_charge = raw_df['Q charge/mA.h'].fillna(0).values
         q_discharge = raw_df['Q discharge/mA.h'].fillna(0).values
@@ -27,14 +27,17 @@ class TongjiProcessor(BaseProcessor):
             'time': raw_df['time/s'].values,                    
             'voltage': raw_df['Ecell/V'].values,
             'current': raw_df['<I>/mA'].values / 1000.0,        
-            'capacity': merged_capacity_Ah,  
+            'capacity': merged_capacity_Ah,
             'charge_stage': stages
         })
 
         # 每个cycle的时间从0开始
         cycle_start_times = df_data.groupby('cycle_number')['time'].transform('first')
         df_data['time'] = df_data['time'] - cycle_start_times
-        
+
+        # 异常cycle剔除
+        df_data = self._remove_abnormal_cycles(file_path, df_data)
+     
         return df_data
     
 
@@ -66,5 +69,44 @@ class TongjiProcessor(BaseProcessor):
         s_stages[is_rest] = rest_stages[is_rest]
         
         return s_stages.astype(int).values
+    
+
+    def _remove_abnormal_cycles(self, file_path, df):
+        """
+        根据原始Tongji dataset的处理逻辑进行异常cycle剔除
+        Dataset_1_NCA_battery: 
+        Dataset_2_NCM_battery: 
+        Dataset_3_NCM_NCA_battery: 
+        """
+        df_discharge = df[df['charge_stage'] == 3]
+        cycle_caps = df_discharge.groupby('cycle_number')['capacity'].max()
+        valid_cycle_numbers = []
+
+        if "Dataset_1_NCA_battery" in str(file_path):
+            mask = (cycle_caps >= 2.5) & (cycle_caps <= 3.5)
+            valid_cycle_numbers = cycle_caps[mask].index.tolist()
+
+        elif "Dataset_2_NCM_battery" in str(file_path):
+            mask = (cycle_caps >= 2.5)
+            valid_cycle_numbers = cycle_caps[mask].index.tolist()
+        
+        elif "Dataset_3_NCM_NCA_battery" in str(file_path):
+            q_p = cycle_caps.iloc[0] 
+            delta = 1
+            
+            for cyc, q_dis_ah in cycle_caps.items():
+                if q_dis_ah < 1.65 or q_dis_ah > 2.51:
+                    delta += 1
+                    continue
+
+                if abs(q_dis_ah - q_p) > delta * 0.01:
+                    delta += 1
+                    continue
+
+                valid_cycle_numbers.append(cyc)
+                q_p = q_dis_ah 
+                delta = 1
+        
+        return df[df['cycle_number'].isin(valid_cycle_numbers)].copy()
 
     

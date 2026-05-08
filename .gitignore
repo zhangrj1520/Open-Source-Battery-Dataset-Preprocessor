@@ -1,6 +1,6 @@
 /notebooks
 /.vscode
 /data
+/test
 __pycache__/
-config.yaml
 *.pyc

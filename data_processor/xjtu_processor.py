@@ -27,7 +27,7 @@ class XjtuProcessor(BaseProcessor):
             relative_seconds = (t_series - t_series[0]).total_seconds()
             
             # 判定充放电状态
-            stages = self._determine_charge_stage(current, threshold=current_threshold)
+            stages = self._determine_charge_stages(current, threshold=current_threshold)
 
             # 创建DataFrame
             temp_df = pd.DataFrame({
@@ -37,7 +37,7 @@ class XjtuProcessor(BaseProcessor):
                 'current': current,
                 'temperature': np.ravel(cycle_struct['temperature_C']),
                 'capacity': np.ravel(cycle_struct['capacity_Ah']),
-                'charge_state': stages
+                'charge_stage': stages
             })
             
             all_cycles.append(temp_df)

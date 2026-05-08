@@ -30,7 +30,8 @@ def plot_cycle_curve(df, cycle_idx):
 
 def plot_capacity_degradation(df):
     """查看整个电池的容量衰减曲线"""
-    capacity = df.groupby('cycle_number')['capacity'].max()
+    df_discharge = df[df['charge_stage'] == 3]
+    capacity = df_discharge.groupby('cycle_number')['capacity'].max()
     
     plt.figure(figsize=(10, 5))
     plt.plot(capacity.index, capacity.values, marker='o', markersize=4, linestyle='-', color='tab:green')
