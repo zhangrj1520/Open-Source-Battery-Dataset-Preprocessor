@@ -1,5 +1,6 @@
 /notebooks
 /.vscode
+/.claude
 /data
 /test
 __pycache__/
