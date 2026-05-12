@@ -6,10 +6,10 @@ from data_processor.base_processor import BaseProcessor
 
 
 class NasaProcessor(BaseProcessor):
-    """处理NASA电池数据集的Processor"""
+    """ 处理NASA电池数据集的Processor """
 
     def load_data(self, file_path):
-        """加载NASA .mat数据并执行标准化转换"""
+        """ 加载 NASA .mat 数据并执行标准化转换 """
         mat = loadmat(str(file_path))
         cell_name = Path(file_path).stem
         cell = mat[cell_name][0, 0]
@@ -23,7 +23,7 @@ class NasaProcessor(BaseProcessor):
             op_type = str(c['type'][0])
 
             if op_type == 'impedance':
-                continue  # 过滤EIS测量
+                continue
             if op_type not in ('charge', 'discharge'):
                 continue
 
@@ -34,6 +34,7 @@ class NasaProcessor(BaseProcessor):
                 cycle_num += 1
 
             stages = self._determine_charge_stages(op_type, n_rows)
+            
             temp_df = pd.DataFrame({
                 'cycle_number': cycle_num,
                 'type': op_type,
@@ -45,35 +46,27 @@ class NasaProcessor(BaseProcessor):
             })
             all_cycles.append(temp_df)
 
-        if not all_cycles:
-            raise ValueError(f"No charge/discharge data found in {file_path}")
-
         df = pd.concat(all_cycles, ignore_index=True)
         df = self._remove_abnormal_cycles(df)
         df = self._compute_capacity(df)
+
         return df
 
+
     def _determine_charge_stages(self, op_type, n_rows):
-        """
-        根据操作类型直接判定阶段:
-        - charge → 1
-        - discharge → 3
-        无静置阶段。
-        """
+        """ 根据操作类型直接判定阶段, 无静置阶段 """
         stage = 1 if op_type == 'charge' else 3
         return np.full(n_rows, stage, dtype=int)
 
+
     def _compute_capacity(self, df):
-        """
-        计算容量 (Ah)。
-        NASA数据charge阶段无显式Capacity字段, 通过安时积分积分计算。
-        每个(cycle_number, charge_stage)组内独立累计。
-        """
+        """ 安时积分为charge阶段计算容量 """
         df = df.copy()
         dt = df.groupby(['cycle_number', 'charge_stage'])['time'].diff().fillna(0)
         group_key = df['cycle_number'].astype(str) + '_' + df['charge_stage'].astype(str)
         df['capacity'] = (df['current'].abs() * dt).groupby(group_key).cumsum() / 3600.0
         return df
+
 
     def _remove_abnormal_cycles(self, df):
         """异常检测"""
@@ -93,3 +86,4 @@ class NasaProcessor(BaseProcessor):
         valid_cycles = valid_mask[valid_mask].index.tolist()
 
         return df[df['cycle_number'].isin(valid_cycles)].copy()
+

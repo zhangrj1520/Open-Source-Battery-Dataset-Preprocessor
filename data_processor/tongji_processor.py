@@ -4,9 +4,9 @@ from data_processor.base_processor import BaseProcessor
 
 
 class TongjiProcessor(BaseProcessor):
-    """处理Tongji数据集的Processor"""
+    """ 处理Tongji数据集的Processor """
     def load_data(self, file_path):
-        """加载 Tongji .csv 数据并执行标准化转换"""
+        """ 加载 Tongji .csv 数据并执行标准化转换 """
         raw_df = pd.read_csv(file_path)
         
         # 提取控制信号
@@ -43,8 +43,7 @@ class TongjiProcessor(BaseProcessor):
 
     def _determine_charge_stages(self, control_mA, control_V):
         """
-        Tongji dataset 的阶段判定逻辑：
-        利用控制信号 control/mA 和 control/V 进行精确划分。
+        利用控制信号 control/mA 和 control/V 划分。
         - 1: 充电 (control_mA > 0 或 control_V > 0)
         - 2: 充电后静置
         - 3: 放电 (control_mA < 0)
@@ -64,20 +63,13 @@ class TongjiProcessor(BaseProcessor):
         # 判定静置状态
         last_active_stage = s_stages.ffill().fillna(1)
         rest_stages = np.where(last_active_stage == 1, 2, 4)
-        
-        # 填回真实静置状态
         s_stages[is_rest] = rest_stages[is_rest]
         
         return s_stages.astype(int).values
     
 
     def _remove_abnormal_cycles(self, file_path, df):
-        """
-        多维异常cycle检测:
-        1. 放电容量过滤 (Dataset-specific)
-        2. 阶段完整性: 每个cycle应有恰好4段(charge → rest → discharge → rest)
-        3. 时间连续性: 相邻数据点间隔 < 600s
-        """
+        """ 放电容量过滤 + 阶段完整 + 时间连续 """
         df_discharge = df[df['charge_stage'] == 3]
         cycle_caps = df_discharge.groupby('cycle_number')['capacity'].max()
         all_cycles = cycle_caps.index
@@ -109,13 +101,13 @@ class TongjiProcessor(BaseProcessor):
         else:
             capacity_valid[:] = True
 
-        # 阶段完整性: 每个cycle应有恰好4次阶段切换
+        # 阶段完整: 每个cycle应有恰好4次阶段切换
         stage_shifted = df.groupby('cycle_number')['charge_stage'].shift()
         stage_changed = (df['charge_stage'] != stage_shifted)
         transitions_per_cycle = stage_changed.groupby(df['cycle_number']).sum()
         stage_valid = transitions_per_cycle == 4
 
-        # 时间连续性: 相邻数据点间隔 < 600s
+        # 时间连续: 相邻数据点间隔 < 600s
         time_diff = df.groupby('cycle_number')['time'].diff()
         max_gap_per_cycle = time_diff.groupby(df['cycle_number']).max()
         time_valid = max_gap_per_cycle < 600

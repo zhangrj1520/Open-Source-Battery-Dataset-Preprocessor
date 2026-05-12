@@ -5,10 +5,10 @@ from data_processor.base_processor import BaseProcessor
 
 
 class HustProcessor(BaseProcessor):
-    """处理HUST数据集的Processor (77 LFP/graphite cells, multi-stage discharge)"""
+    """ 处理HUST数据集的Processor """
 
     def load_data(self, file_path):
-        """加载HUST .pkl数据并执行标准化转换"""
+        """ 加载 HUST .pkl 数据并执行标准化转换 """
         with open(file_path, 'rb') as f:
             raw = pickle.load(f)
 
@@ -19,7 +19,8 @@ class HustProcessor(BaseProcessor):
         for cyc_num, df_cyc in cell_data['data'].items():
             if len(df_cyc) == 0:
                 continue
-
+            
+            # 判定充放电状态
             stages = self._determine_charge_stages(df_cyc['Status'])
 
             temp_df = pd.DataFrame({
@@ -39,7 +40,9 @@ class HustProcessor(BaseProcessor):
 
         # 异常cycle剔除
         df = self._remove_abnormal_cycles(df)
+
         return df
+
 
     def _determine_charge_stages(self, status_series):
         """
@@ -52,10 +55,9 @@ class HustProcessor(BaseProcessor):
         stages = np.where(is_discharge, 3, 1)
         return stages
 
+
     def _remove_abnormal_cycles(self, df):
-        """
-        时间连续性: 相邻数据点间隔 < 600s，过滤设备中断导致的异常cycle
-        """
+        """ 时间连续 """
         time_diff = df.groupby('cycle_number')['time'].diff()
         max_gap_per_cycle = time_diff.groupby(df['cycle_number']).max()
         time_valid = max_gap_per_cycle < 600

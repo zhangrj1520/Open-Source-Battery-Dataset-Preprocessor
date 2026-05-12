@@ -7,7 +7,6 @@ if __name__ == "__main__":
     ## ---------------------------------------- XJTU Dataset ----------------------------------------
     # from data_processor.xjtu_processor import XjtuProcessor
 
-    # current_threshold = 0.001
     # raw_data_dir = Path("E:/data/OpenSourceData/XJTU/")
 
     # for batch in ["Batch-1", "Batch-2", "Batch-3", "Batch-4", "Batch-5", "Batch-6"]:
@@ -19,7 +18,7 @@ if __name__ == "__main__":
 
     #     for f in file_lst:
     #         file_path = batch_dir / f
-    #         df = processor.load_data(file_path, current_threshold=current_threshold)
+    #         df = processor.load_data(file_path)
             
     #         cell_name = Path(f).stem
     #         processor.save_to_parquet(df, cell_name)
@@ -90,10 +89,11 @@ if __name__ == "__main__":
 
     for date_str, fname in mat_files.items():
         processor = MitProcessor(output_dir=f"data/MIT/{date_str}/")
-        n_cells = processor.open(raw_data_dir / fname)
-        print(f"  [{date_str}] {n_cells} batteries")
+        valid_indices = processor.open(raw_data_dir / fname,
+                                       cont_dir=raw_data_dir)
+        print(f"  [{date_str}] {len(valid_indices)} batteries")
 
-        for bi in range(n_cells):
+        for bi in valid_indices:
             df = processor.load_data(bi)
             name = processor.get_cell_name(bi)
             processor.save_to_parquet(df, name)

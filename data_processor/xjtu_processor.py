@@ -6,7 +6,7 @@ from data_processor.base_processor import BaseProcessor
 
 class XjtuProcessor(BaseProcessor):
     """处理XJTU数据集的Processor"""
-    def load_data(self, file_path, current_threshold):
+    def load_data(self, file_path):
 
         mat_data = loadmat(file_path)
         data_array = mat_data['data']
@@ -27,7 +27,7 @@ class XjtuProcessor(BaseProcessor):
             relative_seconds = (t_series - t_series[0]).total_seconds()
             
             # 判定充放电状态
-            stages = self._determine_charge_stages(current, threshold=current_threshold)
+            stages = self._determine_charge_stages(current)
 
             # 创建DataFrame
             temp_df = pd.DataFrame({
@@ -43,18 +43,20 @@ class XjtuProcessor(BaseProcessor):
             all_cycles.append(temp_df)
 
         df_data = pd.concat(all_cycles, ignore_index=True)
+
         return df_data
 
 
-    def _determine_charge_stages(self, current, threshold):
+    def _determine_charge_stages(self, current):
         
+        threshold = 0.001
         stages = np.zeros_like(current, dtype=int)
-        
-        # 判定充电 (1) 和 放电 (3)
+
+        # 充/放电
         stages[current > threshold] = 1
         stages[current < -threshold] = 3
-        
-        # 判定静置 (2 和 4)
+
+        # 静置: 以首次放电出现位置为界, 之前为充电后静置(2), 之后为放电后静置(4)
         rest_idx = np.where(np.abs(current) <= threshold)[0]
         if len(rest_idx) > 0:
             discharge_start_idx = np.where(stages == 3)[0]
@@ -64,6 +66,6 @@ class XjtuProcessor(BaseProcessor):
                 stages[(np.abs(current) <= threshold) & (np.arange(len(current)) > first_discharge)] = 4
             else:
                 stages[np.abs(current) <= threshold] = 2
-                
+
         return stages
 
